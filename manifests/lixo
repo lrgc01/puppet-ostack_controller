@@ -1,0 +1,7 @@
+   ostack_controller::dbcreate { 'keystone_db':
+     dbtype  => 'mysql',
+     dbname  => 'keystone',
+     dbuser  => 'keystone',
+     dbpass  => 'keatomos3',
+     dbhost  => 'ostackdb',
+   }
