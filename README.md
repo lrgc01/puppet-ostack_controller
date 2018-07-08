@@ -5,6 +5,6 @@
    - Configure the db manager machine (mysql client install, my.cnf defs)
  - Installs keystone and its dependencies
    - Creates base users, roles, projects
- - Installs glance and its dependencies (to do)
+ - Installs glance and its dependencies 
  - Installs nova and its dependencies (to do)
  - Installs neutron and its dependencies (to do)
