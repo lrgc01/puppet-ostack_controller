@@ -1,4 +1,0 @@
-[mysql]
-user=root
-password=docker
-host=ostackdb

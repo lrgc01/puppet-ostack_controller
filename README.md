@@ -4,6 +4,7 @@
  - Base classes to create and populate databases
    - Configure the db manager machine (mysql client install, my.cnf defs)
  - Installs keystone and its dependencies
-   - Creates its base users, roles, projects
- - Installs glance and its dependencies
- - Installs nova and its dependencies
+   - Creates base users, roles, projects
+ - Installs glance and its dependencies (to do)
+ - Installs nova and its dependencies (to do)
+ - Installs neutron and its dependencies (to do)
