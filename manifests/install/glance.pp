@@ -109,4 +109,27 @@ define ostack_controller::install::glance (
       command     => "openstack service create --name $glanceuser --description \"$service_descr\" image",
       unless      => "openstack service show $glanceuser",
    }
+   #
+   # Endpoint creation
+   # Note on 'unless': openstack command always returns 0 even if the endpoint 
+   #                   is not found, that's why we use grep at the end.
+   #
+   exec { 'PubImageEndpointCreation':
+      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
+      environment => $admin_env,
+      command     => "openstack endpoint create --region $ostack_region image public http://$controller_host:$serv_pub_port",
+      unless      => "openstack endpoint list --region $ostack_region --interface public --service image|grep image",
+   }
+   exec { 'IntImageEndpointCreation':
+      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
+      environment => $admin_env,
+      command     => "openstack endpoint create --region $ostack_region image internal http://$controller_host:$serv_int_port",
+      unless      => "openstack endpoint list --region $ostack_region --interface internal --service image|grep image",
+   }
+   exec { 'AdmImageEndpointCreation':
+      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
+      environment => $admin_env,
+      command     => "openstack endpoint create --region $ostack_region image admin http://$controller_host:$serv_adm_port",
+      unless      => "openstack endpoint list --region $ostack_region --interface admin --service image|grep image",
+   }
 }

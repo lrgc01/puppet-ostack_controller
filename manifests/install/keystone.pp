@@ -6,7 +6,7 @@ define ostack_controller::install::keystone (
      $dbuser  = 'keystone',
      $dbpass  = 'keatomos3',
      $dbhost  = 'ostackdb',
-     $controller_srv_name = 'controller',
+     $controller_host = 'controller',
      $ostack_region       = 'RegionOne',
      $bstp_adm_port       = '35357',
      $bstp_int_port       = '5000',
@@ -18,6 +18,18 @@ define ostack_controller::install::keystone (
      $demo_user       = 'demo',
      $demo_pass	      = 'demopass',
 ) {
+
+   # Set shell environment
+   $admin_env => ['HOME=/root','USER=root',
+		 'OS_USERNAME=admin',
+		 "OS_PASSWORD=$dbpass",
+		 'OS_PROJECT_NAME=admin',
+		 'OS_USER_DOMAIN_NAME=Default',
+		 'OS_PROJECT_DOMAIN_NAME=Default',
+		 "OS_AUTH_URL=http://${controller_host}:${bstp_adm_port}/v3", 
+		 'OS_IDENTITY_API_VERSION=3',
+		 ],
+
    # Makes sure keystone, apache2 and libapache2-mod-wsgi are installed
    package { 'keystone':
       name    => 'keystone',
@@ -96,21 +108,13 @@ define ostack_controller::install::keystone (
       environment => ['HOME=/root','USER=root'],
       require     => File['keystone.conf'],
       refreshonly => true,
-      command     => "keystone-manage bootstrap --bootstrap-password $dbpass --bootstrap-admin-url http://$controller_srv_name:$bstp_adm_port/v3/ --bootstrap-internal-url http://$controller_srv_name:$bstp_int_port/v3/ --bootstrap-public-url http://$controller_srv_name:$bstp_pub_port/v3/ --bootstrap-region-id $ostack_region",
+      command     => "keystone-manage bootstrap --bootstrap-password $dbpass --bootstrap-admin-url http://$controller_host:$bstp_adm_port/v3/ --bootstrap-internal-url http://$controller_host:$bstp_int_port/v3/ --bootstrap-public-url http://$controller_host:$bstp_pub_port/v3/ --bootstrap-region-id $ostack_region",
       notify      => Exec['ServiceProjectCreation'],
    }
    # Base mandatory service project creation
    exec { 'ServiceProjectCreation':
       path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-      environment => ['HOME=/root','USER=root', 
-                     'OS_USERNAME=admin', 
-                     "OS_PASSWORD=$dbpass", 
-		     'OS_PROJECT_NAME=admin', 
-		     'OS_USER_DOMAIN_NAME=Default', 
-		     'OS_PROJECT_DOMAIN_NAME=Default', 
-		     "OS_AUTH_URL=http://${controller_srv_name}:${bstp_adm_port}/v3", 
-		     'OS_IDENTITY_API_VERSION=3', 
-		     ],
+      environment => $admin_env,
       require     => File['keystone.conf'],
       command     => "openstack project create --domain default --description \"$service_proj_descr\" service",
       unless      => "openstack project show service",
@@ -118,15 +122,7 @@ define ostack_controller::install::keystone (
    # Base user role 
    exec { 'UserRoleCreation':
       path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-      environment => ['HOME=/root','USER=root',
-			'OS_USERNAME=admin',
-			"OS_PASSWORD=$dbpass",
-			'OS_PROJECT_NAME=admin',
-			'OS_USER_DOMAIN_NAME=Default',
-			'OS_PROJECT_DOMAIN_NAME=Default',
-		        "OS_AUTH_URL=http://${controller_srv_name}:${bstp_adm_port}/v3", 
-			'OS_IDENTITY_API_VERSION=3',
-			],
+      environment => $admin_env,
       require     => File['keystone.conf'],
       command     => "openstack role create user",
       unless      => "openstack role show user",
@@ -135,15 +131,7 @@ define ostack_controller::install::keystone (
    if $demo_create {
       exec { 'DemoProjectCreation':
          path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-         environment => ['HOME=/root','USER=root',
-			'OS_USERNAME=admin',
-			"OS_PASSWORD=$dbpass",
-			'OS_PROJECT_NAME=admin',
-			'OS_USER_DOMAIN_NAME=Default',
-			'OS_PROJECT_DOMAIN_NAME=Default',
-		        "OS_AUTH_URL=http://${controller_srv_name}:${bstp_adm_port}/v3", 
-			'OS_IDENTITY_API_VERSION=3',
-			],
+         environment => $admin_env,
          require     => File['keystone.conf'],
          command     => "openstack project create --domain default --description \"$demo_proj_descr\" $demo_prj_name",
          unless      => "openstack project show $demo_prj_name",
@@ -151,30 +139,14 @@ define ostack_controller::install::keystone (
       }
       exec { 'DemoUserCreation':
          path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-         environment => ['HOME=/root','USER=root',
-			'OS_USERNAME=admin',
-			"OS_PASSWORD=$dbpass",
-			'OS_PROJECT_NAME=admin',
-			'OS_USER_DOMAIN_NAME=Default',
-			'OS_PROJECT_DOMAIN_NAME=Default',
-		        "OS_AUTH_URL=http://${controller_srv_name}:${bstp_adm_port}/v3", 
-			'OS_IDENTITY_API_VERSION=3',
-			],
+         environment => $admin_env,
          require     => File['keystone.conf'],
          command     => "openstack user create --domain default --password \"$demo_pass\" $demo_user",
          unless      => "openstack user show $demo_user",
       }
       exec { 'DemoRoleAttribution':
          path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-         environment => ['HOME=/root','USER=root',
-			'OS_USERNAME=admin',
-			"OS_PASSWORD=$dbpass",
-			'OS_PROJECT_NAME=admin',
-			'OS_USER_DOMAIN_NAME=Default',
-			'OS_PROJECT_DOMAIN_NAME=Default',
-		        "OS_AUTH_URL=http://${controller_srv_name}:${bstp_adm_port}/v3", 
-			'OS_IDENTITY_API_VERSION=3',
-			],
+         environment => $admin_env,
          require     => [ Exec['UserRoleCreation'], Exec['DemoUserCreation'], ],
 	 refreshonly => true,
          command     => "openstack role add --project $demo_prj_name --user $demo_user user",
