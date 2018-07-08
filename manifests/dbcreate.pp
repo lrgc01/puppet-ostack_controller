@@ -1,3 +1,6 @@
+#
+# This is intended to be run from the machine(s) which should control the DB server
+#
 define ostack_controller::dbcreate ( 
   $dbtype = 'mysql',
   $dbname = undef, 
@@ -6,7 +9,11 @@ define ostack_controller::dbcreate (
   $dbhost = 'localhost'
 ) {
 
-include ostack_controller::definedbsrv
+# May use $cli_name to change the name of the package to be installed (double check!)
+# Example:
+# cli_name => 'mariadb-client-core-10.1'
+# current: $cli_name = 'mariadb-client-core-10.0'
+#
 
   # Only go ahead if named db
   if $dbname {
@@ -14,7 +21,7 @@ include ostack_controller::definedbsrv
         exec { "create-$dbname":
            path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
            environment => ['HOME=/root','USER=root'],
-           require     => Package['mysql-client'],
+           require     => Package['db-client'],
            subscribe   => File['/root/.my.cnf'],
            onlyif      => "test x`echo $(mysql -s -e \"show databases;\" | grep -w $dbname)` != x\"$dbname\"",
            command     => "mysql -s -e 'create database '\"$dbname\"';'",

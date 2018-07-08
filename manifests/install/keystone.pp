@@ -58,6 +58,9 @@ define ostack_controller::install::keystone (
       source  => 'puppet:///modules/ostack_controller/apache2/apache2.conf',
    }
    # Create keystone database
+   # First define this as a cli to mysql
+   ostack_controller::definedbsrv { 'use_mysql_client': }
+   # create db for keystone
    ostack_controller::dbcreate { 'keystone_db':
      dbtype  => $dbtype,
      dbname  => $dbname,
