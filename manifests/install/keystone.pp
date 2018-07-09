@@ -20,7 +20,7 @@ define ostack_controller::install::keystone (
 ) {
 
    # Set shell environment
-   $admin_env => ['HOME=/root','USER=root',
+   $admin_env = ['HOME=/root','USER=root',
 		 'OS_USERNAME=admin',
 		 "OS_PASSWORD=$dbpass",
 		 'OS_PROJECT_NAME=admin',
@@ -28,7 +28,7 @@ define ostack_controller::install::keystone (
 		 'OS_PROJECT_DOMAIN_NAME=Default',
 		 "OS_AUTH_URL=http://${controller_host}:${bstp_adm_port}/v3", 
 		 'OS_IDENTITY_API_VERSION=3',
-		 ],
+		 ]
 
    # Makes sure keystone, apache2 and libapache2-mod-wsgi are installed
    package { 'keystone':

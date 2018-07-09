@@ -15,9 +15,9 @@ define ostack_controller::install::glance (
      $bstp_adm_port       = '35357',
      $bstp_int_port       = '5000',
      $bstp_pub_port       = '5000',
-     $serv_adm_port       = '9292',
-     $serv_int_port       = '9292',
-     $serv_pub_port       = '9292',
+     $glance_adm_port       = '9292',
+     $glance_int_port       = '9292',
+     $glance_pub_port       = '9292',
      $memcache_port = '11211',
      $service_descr = "OpenStack Image",
 ) {
@@ -117,19 +117,19 @@ define ostack_controller::install::glance (
    exec { 'PubImageEndpointCreation':
       path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
       environment => $admin_env,
-      command     => "openstack endpoint create --region $ostack_region image public http://$controller_host:$serv_pub_port",
+      command     => "openstack endpoint create --region $ostack_region image public http://$controller_host:$glance_pub_port",
       unless      => "openstack endpoint list --region $ostack_region --interface public --service image|grep image",
    }
    exec { 'IntImageEndpointCreation':
       path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
       environment => $admin_env,
-      command     => "openstack endpoint create --region $ostack_region image internal http://$controller_host:$serv_int_port",
+      command     => "openstack endpoint create --region $ostack_region image internal http://$controller_host:$glance_int_port",
       unless      => "openstack endpoint list --region $ostack_region --interface internal --service image|grep image",
    }
    exec { 'AdmImageEndpointCreation':
       path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
       environment => $admin_env,
-      command     => "openstack endpoint create --region $ostack_region image admin http://$controller_host:$serv_adm_port",
+      command     => "openstack endpoint create --region $ostack_region image admin http://$controller_host:$glance_adm_port",
       unless      => "openstack endpoint list --region $ostack_region --interface admin --service image|grep image",
    }
 }
