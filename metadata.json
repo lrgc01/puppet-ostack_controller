@@ -2,9 +2,9 @@
   "name": "lrgc01-ostack_controller",
   "version": "1.0.0",
   "author": "lrgc01",
-  "summary": "Installs, configures, and manages openstack environment controller, nova-compute, keystone, glance, neutron, horizon.",
+  "summary": "Installs, configures, and manages openstack environment on a controller machine: nova-compute, keystone, glance, neutron, horizon.",
   "license": "BSD",
-  "source": "git://github.com/lrgc01/ostack_controller.git",
+  "source": "git://github.com/lrgc01/puppet-ostack_controller.git",
   "dependencies": [
   ],
   "data_provider": null,

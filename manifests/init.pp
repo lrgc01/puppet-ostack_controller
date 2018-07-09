@@ -1,5 +1,9 @@
 class ostack_controller ( 
    $etcd_host = undef, 
+   $mysql_cli_host = $::hostname, 
+   $mysql_cli_pkg = 'mariadb-client-core-10.0', 
+   $dbserv   = 'ostackdb',
+   $dbrootpass = 'docker',
 ) {
 
 # Globally used
@@ -23,7 +27,7 @@ class ostack_controller (
 
 ### Specific hosts
 
-   # In case this host is expected to run etcd
+   # In case this host is expected to run etcd, mysql-client (admin DB),
    case $::hostname { 
       "${etcd_host}": {
          # etcd rund on one host only
@@ -52,6 +56,15 @@ class ostack_controller (
             command     => "systemctl restart etcd",
          }
    
+      }
+      # If this host is supposed to be DB admin with mysql/mariadb CLI
+      # Up to now, the mysql_cli_host must be de controller
+      "$mysql_cli_host": {
+         class { 'ostack_controller::definedbsrv':
+              cli_name => 'mariadb-client-core-10.0',
+              dbserv   => 'ostackdb',
+              dbrootpass => 'docker',
+         }
       }
    }
 

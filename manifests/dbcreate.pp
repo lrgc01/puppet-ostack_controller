@@ -9,6 +9,8 @@ define ostack_controller::dbcreate (
   $dbhost = 'localhost'
 ) {
 
+include ostack_controller::definedbsrv 
+
 # May use $cli_name to change the name of the package to be installed (double check!)
 # Example:
 # cli_name => 'mariadb-client-core-10.1'

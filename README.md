@@ -8,3 +8,4 @@
  - Installs glance and its dependencies 
  - Installs nova and its dependencies
  - Installs neutron and its dependencies (to do)
+ - Installs and configure horizon (to do)
