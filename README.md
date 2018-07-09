@@ -6,5 +6,5 @@
  - Installs keystone and its dependencies
    - Creates base users, roles, projects
  - Installs glance and its dependencies 
- - Installs nova and its dependencies (to do)
+ - Installs nova and its dependencies
  - Installs neutron and its dependencies (to do)
