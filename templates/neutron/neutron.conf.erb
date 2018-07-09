@@ -1,0 +1,35 @@
+[DEFAULT]
+core_plugin = ml2
+service_plugins = router
+allow_overlapping_ips = true
+
+notify_nova_on_port_status_changes = true
+notify_nova_on_port_data_changes = true
+
+transport_url = <%=@mq_proto%>://<%=@mq_user%>:<%=@mq_pass%>@<%=@mq_host%>
+
+auth_strategy = keystone
+
+[database]
+connection = <%=@dbconnection%>://<%=@dbuser%>:<%=@dbpass%>@<%=@dbhost%>/<%=@dbname%>
+
+[keystone_authtoken]
+auth_uri = http://<%=@controller_host%>:<%=@bstp_int_port%>
+auth_url = http://<%=@controller_host%>:<%=@bstp_adm_port%>
+memcached_servers = <%=@memcache_host%>:<%=@memcache_port%>
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+project_name = service
+username = <%=@neutronuser%>
+password = <%=@neutronpass%>
+
+[nova]
+auth_url = http://<%=@controller_host%>:<%=@bstp_adm_port%>
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+region_name = <%=@ostack_region%>
+project_name = service
+username = <%=@novauser%>
+password = <%=@novapass%>

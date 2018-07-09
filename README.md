@@ -3,9 +3,14 @@
  - Can install and run etcd on specific server
  - Base classes to create and populate databases
    - Configure the db manager machine (mysql client install, my.cnf defs)
- - Installs keystone and its dependencies
-   - Creates base users, roles, projects
- - Installs glance and its dependencies 
- - Installs nova and its dependencies
- - Installs neutron and its dependencies (to do)
- - Installs and configure horizon (to do)
+ - Install keystone and its dependencies
+   - It creates base users, roles, projects.
+ - Install glance and its dependencies 
+   - It creates endpoints, user, project and add role.
+ - Install nova and its dependencies
+   - It creates endpoints, user, project and add role.
+   - (Including placement)
+ - Install neutron and its dependencies (to do)
+   - It creates endpoints, user, project and add role.
+ - Install and configure horizon (to do)
+   - Access http://controler:3000/horizon

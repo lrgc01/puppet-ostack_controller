@@ -37,7 +37,7 @@ api_servers = http://<%=@controller_host%>:<%=@glance_pub_port%>
 lock_path = /var/lib/nova/tmp
 
 [placement]
-os_region_name = RegionOne
+os_region_name = <%=@ostack_region%>
 project_domain_name = Default
 project_name = service
 auth_type = password
@@ -46,3 +46,15 @@ auth_url = http://<%=@controller_host%>:<%=@bstp_adm_port%>
 username = <%=@placemuser%>
 password = <%=@placempass%>
 
+[neutron]
+url = http://controller:9696
+auth_url = http://<%=@controller_host%>:<%=@bstp_adm_port%>
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+region_name = <%=@ostack_region%>
+project_name = service
+username = <%=@neutronuser%>
+password = <%=@neutronpass%>
+service_metadata_proxy = true
+metadata_proxy_shared_secret = meatomos3
