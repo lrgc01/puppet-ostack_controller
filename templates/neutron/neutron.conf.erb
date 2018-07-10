@@ -10,6 +10,9 @@ transport_url = <%=@mq_proto%>://<%=@mq_user%>:<%=@mq_pass%>@<%=@mq_host%>
 
 auth_strategy = keystone
 
+[agent]
+root_helper = sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf
+
 [database]
 connection = <%=@dbconnection%>://<%=@dbuser%>:<%=@dbpass%>@<%=@dbhost%>/<%=@dbname%>
 
