@@ -19,9 +19,9 @@ define ostack_controller::install::nova (
      $mq_pass  = 'raatomos3',
      $mq_host  = 'rabbitmq',
      $ostack_region       = 'RegionOne',
-     $bstp_adm_port       = '35357',
-     $bstp_int_port       = '5000',
-     $bstp_pub_port       = '5000',
+     $bstp_adm_port       = '35357/v3/',
+     $bstp_int_port       = '5000/v3/',
+     $bstp_pub_port       = '5000/v3/',
      $nova_adm_port       = '8774/v2.1',
      $nova_int_port       = '8774/v2.1',
      $nova_pub_port       = '8774/v2.1',
@@ -43,7 +43,7 @@ define ostack_controller::install::nova (
                 'OS_PROJECT_NAME=admin', 
                 'OS_USER_DOMAIN_NAME=Default', 
                 'OS_PROJECT_DOMAIN_NAME=Default', 
-                "OS_AUTH_URL=http://${controller_host}:${bstp_adm_port}/v3", 
+                "OS_AUTH_URL=http://${controller_host}:${bstp_adm_port}", 
                 'OS_IDENTITY_API_VERSION=3', 
                 ]
 

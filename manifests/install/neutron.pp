@@ -18,9 +18,9 @@ define ostack_controller::install::neutron (
      $mq_pass  = 'raatomos3',
      $mq_host  = 'rabbitmq',
      $ostack_region       = 'RegionOne',
-     $bstp_adm_port       = '35357',
-     $bstp_int_port       = '5000',
-     $bstp_pub_port       = '5000',
+     $bstp_adm_port       = '35357/v3/',
+     $bstp_int_port       = '5000/v3/',
+     $bstp_pub_port       = '5000/v3/',
      $nova_adm_port       = '8774/v2.1',
      $nova_int_port       = '8774/v2.1',
      $nova_pub_port       = '8774/v2.1',
@@ -44,7 +44,7 @@ define ostack_controller::install::neutron (
                 'OS_PROJECT_NAME=admin', 
                 'OS_USER_DOMAIN_NAME=Default', 
                 'OS_PROJECT_DOMAIN_NAME=Default', 
-                "OS_AUTH_URL=http://${controller_host}:${bstp_adm_port}/v3", 
+                "OS_AUTH_URL=http://${controller_host}:${bstp_adm_port}", 
                 'OS_IDENTITY_API_VERSION=3', 
                 ]
 
@@ -64,7 +64,7 @@ define ostack_controller::install::neutron (
       ensure  => present,
       require => File['/etc/neutron/plugins/ml2/'],
       content => template('ostack_controller/neutron/neutron.conf.erb'),
-      notify  => Exec['neutron-server-restart'],
+      notify  => Exec['neutron-services-restart'],
    }
    file { 'linuxbridge_agent.ini':
       name    => '/etc/neutron/plugins/ml2/linuxbridge_agent.ini',

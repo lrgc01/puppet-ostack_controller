@@ -12,9 +12,9 @@ define ostack_controller::install::glance (
      $memcache_host = 'memcache',
      $controller_host = 'controller',
      $ostack_region       = 'RegionOne',
-     $bstp_adm_port       = '35357',
-     $bstp_int_port       = '5000',
-     $bstp_pub_port       = '5000',
+     $bstp_adm_port       = '35357/v3/',
+     $bstp_int_port       = '5000/v3/',
+     $bstp_pub_port       = '5000/v3/',
      $glance_adm_port       = '9292',
      $glance_int_port       = '9292',
      $glance_pub_port       = '9292',
@@ -29,7 +29,7 @@ define ostack_controller::install::glance (
                 'OS_PROJECT_NAME=admin', 
                 'OS_USER_DOMAIN_NAME=Default', 
                 'OS_PROJECT_DOMAIN_NAME=Default', 
-                "OS_AUTH_URL=http://${controller_host}:${bstp_adm_port}/v3", 
+                "OS_AUTH_URL=http://${controller_host}:${bstp_adm_port}", 
                 'OS_IDENTITY_API_VERSION=3', 
                 ]
 

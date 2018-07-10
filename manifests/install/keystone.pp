@@ -8,9 +8,9 @@ define ostack_controller::install::keystone (
      $dbhost  = 'ostackdb',
      $controller_host = 'controller',
      $ostack_region       = 'RegionOne',
-     $bstp_adm_port       = '35357',
-     $bstp_int_port       = '5000',
-     $bstp_pub_port       = '5000',
+     $bstp_adm_port       = '35357/v3/',
+     $bstp_int_port       = '5000/v3/',
+     $bstp_pub_port       = '5000/v3/',
      $service_proj_descr = "Service Project",
      $demo_create     = true,
      $demo_prj_name   = 'demo',
@@ -26,7 +26,7 @@ define ostack_controller::install::keystone (
 		 'OS_PROJECT_NAME=admin',
 		 'OS_USER_DOMAIN_NAME=Default',
 		 'OS_PROJECT_DOMAIN_NAME=Default',
-		 "OS_AUTH_URL=http://${controller_host}:${bstp_adm_port}/v3", 
+		 "OS_AUTH_URL=http://${controller_host}:${bstp_adm_port}", 
 		 'OS_IDENTITY_API_VERSION=3',
 		 ]
 
@@ -108,7 +108,7 @@ define ostack_controller::install::keystone (
       environment => ['HOME=/root','USER=root'],
       require     => File['keystone.conf'],
       refreshonly => true,
-      command     => "keystone-manage bootstrap --bootstrap-password $dbpass --bootstrap-admin-url http://$controller_host:$bstp_adm_port/v3/ --bootstrap-internal-url http://$controller_host:$bstp_int_port/v3/ --bootstrap-public-url http://$controller_host:$bstp_pub_port/v3/ --bootstrap-region-id $ostack_region",
+      command     => "keystone-manage bootstrap --bootstrap-password $dbpass --bootstrap-admin-url http://$controller_host:$bstp_adm_port --bootstrap-internal-url http://$controller_host:$bstp_int_port --bootstrap-public-url http://$controller_host:$bstp_pub_port --bootstrap-region-id $ostack_region",
       notify      => Exec['ServiceProjectCreation'],
    }
    # Base mandatory service project creation

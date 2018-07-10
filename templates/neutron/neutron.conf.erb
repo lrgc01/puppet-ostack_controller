@@ -3,12 +3,12 @@ core_plugin = ml2
 service_plugins = router
 allow_overlapping_ips = true
 
+auth_strategy = keystone
+
 notify_nova_on_port_status_changes = true
 notify_nova_on_port_data_changes = true
 
 transport_url = <%=@mq_proto%>://<%=@mq_user%>:<%=@mq_pass%>@<%=@mq_host%>
-
-auth_strategy = keystone
 
 [agent]
 root_helper = sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf
