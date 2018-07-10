@@ -7,6 +7,9 @@ firewall_driver = nova.virt.firewall.NoopFirewallDriver
 [api_database]
 connection = <%=@dbconnection%>://<%=@dbuser%>:<%=@dbpass%>@<%=@dbhost%>/<%=@apidbname%>
 
+[cells]
+enable = False
+
 [database]
 connection = <%=@dbconnection%>://<%=@dbuser%>:<%=@dbpass%>@<%=@dbhost%>/<%=@dbname%>
 
@@ -30,7 +33,6 @@ vncserver_listen = $my_ip
 vncserver_proxyclient_address = $my_ip
 
 [glance]
-#api_servers = http://controller:9292
 api_servers = http://<%=@controller_host%>:<%=@glance_pub_port%>
 
 [oslo_concurrency]
@@ -58,3 +60,6 @@ username = <%=@neutronuser%>
 password = <%=@neutronpass%>
 service_metadata_proxy = true
 metadata_proxy_shared_secret = meatomos3
+
+[scheduler]
+discover_hosts_in_cells_interval = 300

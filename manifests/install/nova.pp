@@ -11,6 +11,8 @@ define ostack_controller::install::nova (
      $novapass  = $dbpass,
      $placemuser  = 'placement',
      $placempass  = 'platomos3',
+     $neutronuser  = 'neutron',
+     $neutronpass  = 'neatomos3',
      $admindbpass = 'keatomos3',
      $memcache_host = 'memcache',
      $controller_host = 'controller',
@@ -78,6 +80,7 @@ define ostack_controller::install::nova (
      dbuser  => $dbuser,
      dbpass  => $dbpass,
      dbhost  => $dbhost,
+     notify  => [ Exec['nova_cell0-register_db'], Exec['nova-cell1-create'], ],
    }
 
    # Pre requisites (user, endpoints, service, role)
@@ -201,7 +204,7 @@ define ostack_controller::install::nova (
    package { 'nova-placement-api':
       ensure  => present,
    }
-   exec { "nova-service-restart":
+   exec { "nova-services-restart":
       path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
       environment => ['HOME=/root','USER=root'],
       require     => [ Package['nova-api'], Package['nova-conductor'], Package['nova-consoleauth'], Package['nova-novncproxy'], Package['nova-scheduler'], Package['nova-placement-api'], ],
@@ -215,7 +218,7 @@ define ostack_controller::install::nova (
       name    => '/etc/nova/nova.conf',
       ensure  => present,
       content => template('ostack_controller/nova/nova.conf.erb'),
-      notify  => Exec['nova-service-restart'],
+      notify  => Exec['nova-services-restart'],
    }
 
    ######
@@ -227,6 +230,7 @@ define ostack_controller::install::nova (
       environment => ['HOME=/root','USER=root'],
       require     => [ File['nova.conf'], Package['nova-api'], Package['nova-conductor'], Package['nova-scheduler'], Ostack_controller::Dbcreate[nova_api], Ostack_controller::Dbcreate[nova_cell0], Ostack_controller::Dbcreate[nova],],
       refreshonly => true,
+      before      => [ Exec['nova_cell0-register_db'], Exec['nova-cell1-create'], Exec['nova-populate_db'], ],
       onlyif      => "test x`echo $(mysql -s -e \"show databases;\" | grep -w nova_api)` = x\"nova_api\"",
       command     => "su -s /bin/sh -c \"nova-manage api_db sync\" $novauser",
       timeout     => 600,
@@ -236,8 +240,9 @@ define ostack_controller::install::nova (
       path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
       environment => ['HOME=/root','USER=root'],
       require     => [ File['nova.conf'], Package['nova-api'], Package['nova-conductor'], Package['nova-scheduler'], Ostack_controller::Dbcreate[nova_api], Ostack_controller::Dbcreate[nova_cell0], Ostack_controller::Dbcreate[nova],],
+      refreshonly => true,
+      before      => [ Exec['nova-cell1-create'], Exec['nova-populate_db'], ],
       onlyif      => "test x`echo $(mysql -s -e \"show databases;\" | grep -w nova_cell0)` = x\"nova_cell0\"",
-      unless      => 'nova-manage cell_v2 list_cells |grep -w cell0',
       command     => "su -s /bin/sh -c \"nova-manage cell_v2 map_cell0\" $novauser",
    }
    # Configure post install - create nova cell1 cell
@@ -245,8 +250,9 @@ define ostack_controller::install::nova (
       path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
       environment => ['HOME=/root','USER=root'],
       require     => [ File['nova.conf'], Package['nova-api'], Package['nova-conductor'], Package['nova-scheduler'], Ostack_controller::Dbcreate[nova_api], Ostack_controller::Dbcreate[nova_cell0], Ostack_controller::Dbcreate[nova],],
+      refreshonly => true,
+      before      => Exec['nova-populate_db'],
       onlyif      => "test x`echo $(mysql -s -e \"show databases;\" | grep -w nova_cell0)` = x\"nova_cell0\"",
-      unless      => 'nova-manage cell_v2 list_cells |grep -w cell1',
       command     => "su -s /bin/sh -c \"nova-manage cell_v2 create_cell --name=cell1\" $novauser",
    }
    # Configure post install - populate nova DB
