@@ -10,7 +10,7 @@
  - Install nova and its dependencies
    - It creates endpoints, user, project and add role.
    - (Including placement)
- - Install neutron and its dependencies (to do)
+ - Install neutron and its dependencies (working on)
    - It creates endpoints, user, project and add role.
  - Install and configure horizon (to do)
    - Access http://controler:3000/horizon

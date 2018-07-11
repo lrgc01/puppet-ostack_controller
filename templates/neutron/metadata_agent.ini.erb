@@ -1,4 +1,6 @@
 [DEFAULT]
-nova_metadata_host = controller
-metadata_proxy_shared_secret = meatomos3
+nova_metadata_host = <%=@controller_host%>
+metadata_proxy_shared_secret = <%=@metadatapass%>
 
+[agent]
+[cache]

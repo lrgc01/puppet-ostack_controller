@@ -11,6 +11,7 @@ define ostack_controller::install::neutron (
      $glanceuser  = $dbuser,
      $glancepass  = $dbpass,
      $admindbpass = 'keatomos3',
+     $metadatapass = 'meatomos3',
      $memcache_host = 'memcache',
      $controller_host = 'controller',
      $mq_proto = 'rabbit',

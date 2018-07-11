@@ -1,20 +1,47 @@
 [DEFAULT]
+lock_path = /var/lock/nova
+state_path = /var/lib/nova
 transport_url = <%=@mq_proto%>://<%=@mq_user%>:<%=@mq_pass%>@<%=@mq_host%>
 my_ip = <%=@ipaddress_enp0s5f1%>
 use_neutron = True
 firewall_driver = nova.virt.firewall.NoopFirewallDriver
+connection = <%=@dbconnection%>://<%=@dbuser%>:<%=@dbpass%>@<%=@dbhost%>/<%=@apidbname%>
+
+[api]
+auth_strategy = keystone
 
 [api_database]
 connection = <%=@dbconnection%>://<%=@dbuser%>:<%=@dbpass%>@<%=@dbhost%>/<%=@apidbname%>
 
+[barbican]
+[cache]
+
 [cells]
 enable = False
+
+[cinder]
+[compute]
+[conductor]
+[console]
+[consoleauth]
+[cors]
+[crypto]
 
 [database]
 connection = <%=@dbconnection%>://<%=@dbuser%>:<%=@dbpass%>@<%=@dbhost%>/<%=@dbname%>
 
-[api]
-auth_strategy = keystone
+[ephemeral_storage_encryption]
+[filter_scheduler]
+
+[glance]
+api_servers = http://<%=@controller_host%>:<%=@glance_pub_port%>
+
+[guestfs]
+[healthcheck]
+[hyperv]
+[ironic]
+[key_manager]
+[keystone]
 
 [keystone_authtoken]
 auth_uri = http://<%=@controller_host%>:<%=@bstp_int_port%>
@@ -27,16 +54,38 @@ project_name = service
 username = <%=@novauser%>
 password = <%=@novapass%>
 
-[vnc]
-enabled = true
-vncserver_listen = $my_ip
-vncserver_proxyclient_address = $my_ip
+[libvirt]
+[matchmaker_redis]
+[metrics]
+[mks]
 
-[glance]
-api_servers = http://<%=@controller_host%>:<%=@glance_pub_port%>
+[neutron]
+url = http://<%=@controller_host%>:<%=@neutron_adm_port%>
+auth_url = http://<%=@controller_host%>:<%=@bstp_adm_port%>
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+region_name = <%=@ostack_region%>
+project_name = service
+username = <%=@neutronuser%>
+password = <%=@neutronpass%>
+service_metadata_proxy = true
+metadata_proxy_shared_secret = <%=@metadatapass%>
+
+[notifications]
+[osapi_v21]
 
 [oslo_concurrency]
 lock_path = /var/lib/nova/tmp
+
+[oslo_messaging_amqp]
+[oslo_messaging_kafka]
+[oslo_messaging_notifications]
+[oslo_messaging_rabbit]
+[oslo_messaging_zmq]
+[oslo_middleware]
+[oslo_policy]
+[pci]
 
 [placement]
 os_region_name = <%=@ostack_region%>
@@ -48,18 +97,28 @@ auth_url = http://<%=@controller_host%>:<%=@bstp_adm_port%>
 username = <%=@placemuser%>
 password = <%=@placempass%>
 
-[neutron]
-url = http://controller:9696
-auth_url = http://<%=@controller_host%>:<%=@bstp_adm_port%>
-auth_type = password
-project_domain_name = default
-user_domain_name = default
-region_name = <%=@ostack_region%>
-project_name = service
-username = <%=@neutronuser%>
-password = <%=@neutronpass%>
-service_metadata_proxy = true
-metadata_proxy_shared_secret = meatomos3
+[quota]
+[rdp]
+[remote_debug]
 
 [scheduler]
 discover_hosts_in_cells_interval = 300
+
+[serial_console]
+[service_user]
+[spice]
+[trusted_computing]
+[upgrade_levels]
+[vendordata_dynamic_auth]
+[vmware]
+
+[vnc]
+enabled = true
+vncserver_listen = $my_ip
+vncserver_proxyclient_address = $my_ip
+
+[workarounds]
+[wsgi]
+[xenserver]
+[xvp]
+
