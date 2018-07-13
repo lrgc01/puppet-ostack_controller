@@ -34,19 +34,23 @@ define ostack_controller::install::keystone (
    package { 'keystone':
       name    => 'keystone',
       ensure  => present,
+      before => Exec["keystone-populate_db"],
    }
    package { 'apache2':
       name    => 'apache2',
       ensure  => present,
+      before => Exec["keystone-populate_db"],
    }
    package { 'libapache2-mod-wsgi':
       name    => 'libapache2-mod-wsgi',
       ensure  => present,
       require => Package['apache2'],
+      before => Exec["keystone-populate_db"],
    }
    service { 'apache2':
       enable  => true,
       require => Package['apache2'],
+      before => Exec["keystone-populate_db"],
    }
 
    if "$dbtype" == 'mysql' {
@@ -82,7 +86,7 @@ define ostack_controller::install::keystone (
    exec { "keystone-populate_db":
       path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
       environment => ['HOME=/root','USER=root'],
-      require     => File['keystone.conf'],
+      require     => [ File['keystone.conf'], Ostack_controller::Dbcreate['keystone_db'], ],
       refreshonly => true,
       onlyif      => "test x`echo $(mysql -s -e \"show databases;\" | grep -w $dbname)` = x\"$dbname\"",
       command     => "su -s /bin/sh -c \"keystone-manage db_sync\" $dbname",
@@ -92,21 +96,21 @@ define ostack_controller::install::keystone (
    exec { 'fernet_setup':
       path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
       environment => ['HOME=/root','USER=root'],
-      require     => File['keystone.conf'],
+      require     => [ File['keystone.conf'], Exec['keystone-populate_db'], ],
       onlyif      => "test ! -f /etc/keystone/fernet-keys/0 -o ! -f /etc/keystone/fernet-keys/1",
       command     => "keystone-manage fernet_setup --keystone-user $dbuser --keystone-group $dbuser",
    }
    exec { 'credential_setup':
       path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
       environment => ['HOME=/root','USER=root'],
-      require     => File['keystone.conf'],
+      require     => [ File['keystone.conf'], Exec['keystone-populate_db'], ],
       onlyif      => "test ! -f /etc/keystone/credential-keys/0 -o ! -f /etc/keystone/credential-keys/1",
       command     => "keystone-manage credential_setup --keystone-user $dbuser --keystone-group $dbuser",
    }
    exec { "keystone-bootstrap":
       path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
       environment => ['HOME=/root','USER=root'],
-      require     => File['keystone.conf'],
+      require     => [ File['keystone.conf'], Exec['keystone-populate_db'], ],
       refreshonly => true,
       command     => "keystone-manage bootstrap --bootstrap-password $dbpass --bootstrap-admin-url http://$controller_host:$bstp_adm_port --bootstrap-internal-url http://$controller_host:$bstp_int_port --bootstrap-public-url http://$controller_host:$bstp_pub_port --bootstrap-region-id $ostack_region",
       notify      => Exec['ServiceProjectCreation'],
@@ -115,7 +119,7 @@ define ostack_controller::install::keystone (
    exec { 'ServiceProjectCreation':
       path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
       environment => $admin_env,
-      require     => File['keystone.conf'],
+      require     => [ File['keystone.conf'], Exec['keystone-populate_db'], Exec['credential_setup'], Exec['keystone-bootstrap'], ],
       command     => "openstack project create --domain default --description \"$service_proj_descr\" service",
       unless      => "openstack project show service",
    }
@@ -123,7 +127,7 @@ define ostack_controller::install::keystone (
    exec { 'UserRoleCreation':
       path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
       environment => $admin_env,
-      require     => File['keystone.conf'],
+      require     => [ File['keystone.conf'], Exec['keystone-populate_db'], Exec['credential_setup'], Exec['keystone-bootstrap'], ],
       command     => "openstack role create user",
       unless      => "openstack role show user",
    }
@@ -132,7 +136,7 @@ define ostack_controller::install::keystone (
       exec { 'DemoProjectCreation':
          path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
          environment => $admin_env,
-         require     => File['keystone.conf'],
+         require     => [ File['keystone.conf'], Exec['keystone-populate_db'], Exec['credential_setup'], Exec['keystone-bootstrap'], ],
          command     => "openstack project create --domain default --description \"$demo_proj_descr\" $demo_prj_name",
          unless      => "openstack project show $demo_prj_name",
 	 notify      => Exec['DemoRoleAttribution'],
@@ -140,7 +144,7 @@ define ostack_controller::install::keystone (
       exec { 'DemoUserCreation':
          path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
          environment => $admin_env,
-         require     => File['keystone.conf'],
+         require     => [ File['keystone.conf'], Exec['keystone-populate_db'], Exec['credential_setup'], Exec['keystone-bootstrap'], ],
          command     => "openstack user create --domain default --password \"$demo_pass\" $demo_user",
          unless      => "openstack user show $demo_user",
       }

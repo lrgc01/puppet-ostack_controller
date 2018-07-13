@@ -56,7 +56,7 @@ define ostack_controller::install::glance (
       notify  => Exec['glance-service-restart'],
    }
 
-   # Create keystone database
+   # Create glance database
    ostack_controller::dbcreate { 'glance_db':
      dbtype  => $dbtype,
      dbname  => $dbname,

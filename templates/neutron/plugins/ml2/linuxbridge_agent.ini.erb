@@ -2,7 +2,8 @@
 [agent]
 
 [linux_bridge]
-physical_interface_mappings = provider:<%=@networking['primary']%>
+#physical_interface_mappings = provider:<%=@networking['primary']%>
+physical_interface_mappings = provider:enp0s5f0
 
 [securitygroup]
 enable_security_group = true

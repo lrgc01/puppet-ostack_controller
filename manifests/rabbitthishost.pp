@@ -19,6 +19,7 @@ class ostack_controller::rabbitthishost (
       }
       exec {'grant-user-rabbit':
          path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
+         environment => ['HOME=/root','USER=root'],
          require     => Package['rabbitmq-server'],
          refreshonly => true,
          command     => "rabbitmqctl add_user $mq_user $mq_pass && rabbitmqctl set_permissions $mq_user \".*\" \".*\" \".*\" ",
