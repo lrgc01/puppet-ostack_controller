@@ -4,6 +4,12 @@ class ostack_controller (
    $mysql_cli_pkg = 'mariadb-client-core-10.0', 
    $dbserv   = 'ostackdb',
    $dbrootpass = 'docker',
+   $mq_proto  = 'rabbit',
+   $mq_real_hostname     = undef,
+   $mq_user  = 'openstack',
+   $mq_pass  = 'raatomos3',
+   $mq_host  = "$mq_real_hostname",
+
 ) {
 
 # Globally used
@@ -28,45 +34,54 @@ class ostack_controller (
 ### Specific hosts
 
    # In case this host is expected to run etcd, mysql-client (admin DB),
-   case $::hostname { 
-      "${etcd_host}": {
-         # etcd rund on one host only
-         package { 'etcd':
-            name => 'etcd',     		   # not needed if its the same as title
-            require => Exec['apt-update'],        # require 'apt-update' before installing
-            ensure => installed,
-         }
-         # ensure apache2 service is running
-         service { 'etcd':
-            require => Package['etcd'],
-            enable => true,
-            ensure => running,
-         }
-         # ensure correct dir and config file etcd.conf.yml file exist
-         file { '/etc/default/etcd':
-            ensure  => present,
-            require => Package['etcd'],
-            content => 'DAEMON_ARGS="--name  controller --data-dir  /var/lib/etcd --initial-cluster-state  \'new\' --initial-cluster-token  \'etcd-cluster-01\' --initial-cluster  controller=http://192.168.56.196:2380 --initial-advertise-peer-urls  http://192.168.56.196:2380 --advertise-client-urls  http://192.168.56.196:2379 --listen-peer-urls  http://0.0.0.0:2380 --listen-client-urls  http://192.168.56.196:2379"',
-	    notify  => Exec['restart_etcd'],
-         } 
-         # restart for each change in file
-         exec { restart_etcd:
-            path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-            refreshonly => true,
-            command     => "systemctl restart etcd",
-         }
-   
+   if $::hostname ==  "${etcd_host}" {
+      # etcd rund on one host only
+      package { 'etcd':
+         name => 'etcd',     		   # not needed if its the same as title
+         require => Exec['apt-update'],        # require 'apt-update' before installing
+         ensure => installed,
       }
-      # If this host is supposed to be DB admin with mysql/mariadb CLI
-      # Up to now, the mysql_cli_host must be de controller
-      "$mysql_cli_host": {
-         class { 'ostack_controller::definedbsrv':
-              cli_name => 'mariadb-client-core-10.0',
-              dbserv   => 'ostackdb',
-              dbrootpass => 'docker',
+      # ensure apache2 service is running
+      service { 'etcd':
+         require => Package['etcd'],
+         enable => true,
+         ensure => running,
+      }
+      # ensure correct dir and config file etcd.conf.yml file exist
+      file { '/etc/default/etcd':
+         ensure  => present,
+         require => Package['etcd'],
+         content => 'DAEMON_ARGS="--name  controller --data-dir  /var/lib/etcd --initial-cluster-state  \'new\' --initial-cluster-token  \'etcd-cluster-01\' --initial-cluster  controller=http://192.168.56.196:2380 --initial-advertise-peer-urls  http://192.168.56.196:2380 --advertise-client-urls  http://192.168.56.196:2379 --listen-peer-urls  http://0.0.0.0:2380 --listen-client-urls  http://192.168.56.196:2379"',
+	 notify  => Exec['restart_etcd'],
+      } 
+      # restart for each change in file
+      exec { restart_etcd:
+         path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
+         refreshonly => true,
+         command     => "systemctl restart etcd",
+      }
+
+   }
+   # If this host is supposed to be DB admin with mysql/mariadb CLI
+   # Up to now, the mysql_cli_host must be de controller
+   if $::hostname == "$mysql_cli_host" {
+      class { 'ostack_controller::definedbsrv':
+           cli_name => 'mariadb-client-core-10.0',
+           dbserv   => 'ostackdb',
+           dbrootpass => 'docker',
+      }
+   }
+   # If this is the mq server:
+   if $::hostname == "$mq_real_hostname" {
+	 # Up to now, only rabbitmq
+      if "$mq_proto" == 'rabbit' {
+         # Must set $mq_real_hostname to run the class
+         class { 'ostack_controller::rabbitthishost':
+	    mq_real_hostname => "$mq_real_hostname",
+            mq_user  => "$mq_user",
+            mq_pass  => "$mq_pass",
          }
       }
    }
-
 }
 
