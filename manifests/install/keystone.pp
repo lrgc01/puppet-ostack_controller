@@ -69,9 +69,8 @@ define ostack_controller::install::keystone (
    file { 'apache2.conf':
       name    => '/etc/apache2/apache2.conf',
       ensure  => present,
-      recurse => remote,
       require => Package['apache2'],
-      source  => 'puppet:///modules/ostack_controller/apache2/apache2.conf',
+      content => template('ostack_controller/apache2/apache2.conf.erb'),
    }
    # Create keystone database
    ostack_controller::dbcreate { 'keystone_db':

@@ -28,8 +28,13 @@ define ostack_controller::uninstall::glance (
    }
 
    # Make sure glance package is uninstalled
-   package { 'glance-uninstall':
-      name   => 'glance',
+   package { 'glance-api-uninstall':
+      name   => 'glance-api',
+      ensure => absent,
+      require  => Ostack_controller::Dropdb['glance'],
+   }
+   package { 'glance-registry-uninstall':
+      name   => 'glance-registry',
       ensure => absent,
       require  => Ostack_controller::Dropdb['glance'],
    }

@@ -36,7 +36,7 @@ LogFormat "%h %l %u %t \"%r\" %>s %O" common
 LogFormat "%{Referer}i -> %U" referer
 LogFormat "%{User-agent}i" agent
 
-ServerName	controller
+ServerName	<%=@controller_host%>
 
 IncludeOptional conf-enabled/*.conf
 IncludeOptional sites-enabled/*.conf

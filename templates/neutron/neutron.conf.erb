@@ -16,7 +16,7 @@ root_helper = sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf
 [cors]
 
 [database]
-connection = <%=@dbconnection%>://<%=@dbuser%>:<%=@dbpass%>@<%=@dbhost%>/<%=@dbname%>
+connection = <%=@dbconnection%>://<%=@neutrondbuser%>:<%=@neutrondbpass%>@<%=@neutrondbhost%>/<%=@neutrondbname%>
 
 [keystone_authtoken]
 auth_uri = http://<%=@controller_host%>:<%=@bstp_int_port%>
