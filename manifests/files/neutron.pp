@@ -2,10 +2,10 @@
 #
 define ostack_controller::files::neutron (
      $dbtype  = 'mysql',
-     $neutrondbname  = 'neutron',
-     $neutrondbuser  = 'neutron',
-     $neutrondbpass  = 'neatomos3',
-     $neutrondbhost  = 'ostackdb',
+     $dbname  = 'neutron',
+     $dbuser  = 'neutron',
+     $dbpass  = 'neatomos3',
+     $dbhost  = 'ostackdb',
      $neutronuser  = $neutrondbuser,
      $neutronpass  = $neutrondbpass,
      $admindbpass = 'keatomos3',
@@ -33,7 +33,7 @@ define ostack_controller::files::neutron (
      $neutron_int_port       = '9696',
      $neutron_pub_port       = '9696',
      $memcache_port = '11211',
-     $neutron_service_descr = "OpenStack Networking",
+     $service_descr = "OpenStack Networking",
 ) {
 
    # Pre requisites (user, endpoints, service, role)

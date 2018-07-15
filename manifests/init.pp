@@ -1,5 +1,6 @@
 class ostack_controller ( 
    $etcd_host = undef, 
+   $etcd_host_ip = undef, 
    $mysql_cli_host = $::hostname, 
    $mysql_cli_pkg = 'mariadb-client-core-10.0', 
    $dbserv   = 'ostackdb',
@@ -51,7 +52,7 @@ class ostack_controller (
       file { '/etc/default/etcd':
          ensure  => present,
          require => Package['etcd'],
-         content => 'DAEMON_ARGS="--name  controller --data-dir  /var/lib/etcd --initial-cluster-state  \'new\' --initial-cluster-token  \'etcd-cluster-01\' --initial-cluster  controller=http://192.168.56.196:2380 --initial-advertise-peer-urls  http://192.168.56.196:2380 --advertise-client-urls  http://192.168.56.196:2379 --listen-peer-urls  http://0.0.0.0:2380 --listen-client-urls  http://192.168.56.196:2379"',
+         content => "DAEMON_ARGS=\"--name  ${etcd_host} --data-dir  /var/lib/etcd --initial-cluster-state  \'new\' --initial-cluster-token  \'etcd-cluster-01\' --initial-cluster  ${etcd_host}=http://${etcd_host_ip}:2380 --initial-advertise-peer-urls  http://${etcd_host_ip}:2380 --advertise-client-urls  http://${etcd_host_ip}:2379 --listen-peer-urls  http://0.0.0.0:2380 --listen-client-urls  http://${etcd_host_ip}:2379\"",
 	 notify  => Exec['restart_etcd'],
       } 
       # restart for each change in file

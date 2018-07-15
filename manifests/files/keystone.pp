@@ -2,10 +2,10 @@
 #
 define ostack_controller::files::keystone (
      $dbtype  = 'mysql',
-     $keystonedbname  = 'keystone',
-     $keystonedbuser  = 'keystone',
-     $keystonedbpass  = 'keatomos3',
-     $keystonedbhost  = 'ostackdb',
+     $dbname  = 'keystone',
+     $dbuser  = 'keystone',
+     $dbpass  = 'keatomos3',
+     $dbhost  = 'ostackdb',
      $controller_host = 'controller',
      $ostack_region       = 'RegionOne',
      $bstp_adm_port       = '35357/v3/',

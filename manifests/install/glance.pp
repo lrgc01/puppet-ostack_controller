@@ -39,25 +39,48 @@ define ostack_controller::install::glance (
       $dbconnection = "mysql+pymysql"
    }
 
-   # File configuration
-   # We only manage those which need modification
-   file { 'glance-api.conf':
-      name    => '/etc/glance/glance-api.conf',
-      ensure  => present,
-      require => Package['glance'],
-      content => template('ostack_controller/glance/glance-api.conf.erb'),
-      notify  => Exec['glance-service-restart'],
-   }
-   file { 'glance-registry.conf':
-      name    => '/etc/glance/glance-registry.conf',
-      ensure  => present,
-      require => Package['glance'],
-      content => template('ostack_controller/glance/glance-registry.conf.erb'),
+   ostack_controller::files::glance { 'install':
+      dbtype  => $dbtype,
+      dbname  => $dbname,
+      dbuser  => $dbuser,
+      dbpass  => $dbpass,
+      dbhost  => $dbhost,
+      glanceuser    => $glanceuser,
+      glancepass    => $glancepass,
+      admindbpass   => $admindbpass,
+      memcache_host    => $memcache_host,
+      controller_host  => $controller_host,
+      ostack_region    => $ostack_region,
+      bstp_adm_port    => $bstp_adm_port,
+      bstp_int_port    => $bstp_int_port,
+      bstp_pub_port    => $bstp_pub_port,
+      glance_adm_port  => $glance_adm_port,
+      glance_int_port  => $glance_int_port,
+      glance_pub_port  => $glance_pub_port,
+      memcache_port    => $memcache_port,
+      service_descr => $service_descr,
       notify  => Exec['glance-service-restart'],
    }
 
+   # File configuration
+   # We only manage those which need modification
+#   file { 'glance-api.conf':
+#      name    => '/etc/glance/glance-api.conf',
+#      ensure  => present,
+#      require => Package['glance'],
+#      content => template('ostack_controller/glance/glance-api.conf.erb'),
+#      notify  => Exec['glance-service-restart'],
+#   }
+#   file { 'glance-registry.conf':
+#      name    => '/etc/glance/glance-registry.conf',
+#      ensure  => present,
+#      require => Package['glance'],
+#      content => template('ostack_controller/glance/glance-registry.conf.erb'),
+#      notify  => Exec['glance-service-restart'],
+#   }
+
    # Create glance database
-   ostack_controller::dbcreate { 'glance_db':
+   ostack_controller::dbcreate { 'glance':
      dbtype  => $dbtype,
      dbname  => $dbname,
      dbuser  => $dbuser,
@@ -66,14 +89,26 @@ define ostack_controller::install::glance (
      notify  => Exec['glance-populate_db'],
    }
 
-   # Makes sure glance package is installed
-   package { 'glance':
-      name    => 'glance',
+   # Make sure glance package is installed
+   package { 'glance-api':
       ensure  => present,
    }
+   package { 'glance-registry':
+      ensure  => present,
+   }
+   service { 'glance-api':
+      enable  => true,
+      require => Package['glance-api'],
+   }
+   service { 'glance-registry':
+      enable  => true,
+      require => Package['glance-registry'],
+   }
+
    exec { "glance-service-restart":
       path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
       environment => ['HOME=/root','USER=root'],
+      require     => [ Ostack_controller::Files::Glance['install'], Package['glance-api'], Package['glance-registry'], ],
       refreshonly => true,
       command     => 'service glance-registry restart && service glance-api restart',
    }
@@ -82,12 +117,14 @@ define ostack_controller::install::glance (
    exec { "glance-populate_db":
       path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
       environment => ['HOME=/root','USER=root'],
-      require     => [ File['glance-api.conf'], Package['glance'], ],
+      require     => [ Ostack_controller::Files::Glance['install'], Package['glance-api'], Package['glance-registry'], ],
       refreshonly => true,
       onlyif      => "test x`echo $(mysql -s -e \"show databases;\" | grep -w $dbname)` = x\"$dbname\"",
       command     => "su -s /bin/sh -c \"glance-manage db_sync\" $dbname",
       timeout     => 600,
    }
+
+   # After here everything occurs in identity service
    exec { 'GlanceUserCreation':
       path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
       environment => $admin_env,

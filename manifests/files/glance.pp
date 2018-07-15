@@ -2,10 +2,10 @@
 #
 define ostack_controller::files::glance (
      $dbtype  = 'mysql',
-     $glancedbname  = 'glance',
-     $glancedbuser  = 'glance',
-     $glancedbpass  = 'glatomos3',
-     $glancedbhost  = 'ostackdb',
+     $dbname  = 'glance',
+     $dbuser  = 'glance',
+     $dbpass  = 'glatomos3',
+     $dbhost  = 'ostackdb',
      $glanceuser  = $dbuser,
      $glancepass  = $dbpass,
      $admindbpass = 'keatomos3',
@@ -19,7 +19,7 @@ define ostack_controller::files::glance (
      $glance_int_port       = '9292',
      $glance_pub_port       = '9292',
      $memcache_port = '11211',
-     $glance_service_descr = "OpenStack Image",
+     $service_descr = "OpenStack Image",
 ) {
 
    # Pre requisites (user, endpoints, service, role)

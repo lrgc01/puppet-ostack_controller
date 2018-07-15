@@ -2,11 +2,11 @@
 #
 define ostack_controller::files::nova (
      $dbtype  = 'mysql',
-     $novadbname  = 'nova',
-     $novaapidbname  = 'nova_api',
-     $novadbuser  = 'nova',
-     $novadbpass  = 'noatomos3',
-     $novadbhost  = 'ostackdb',
+     $dbname  = 'nova',
+     $apidbname  = 'nova_api',
+     $dbuser  = 'nova',
+     $dbpass  = 'noatomos3',
+     $dbhost  = 'ostackdb',
      $novauser  = $dbuser,
      $novapass  = $dbpass,
      $placemuser  = 'placement',
@@ -38,7 +38,7 @@ define ostack_controller::files::nova (
      $neutron_int_port    = '9696',
      $neutron_pub_port    = '9696',
      $memcache_port       = '11211',
-     $nova_service_descr = "OpenStack Compute",
+     $service_descr = "OpenStack Compute",
      $placem_service_descr = "Placement API",
 ) {
 
