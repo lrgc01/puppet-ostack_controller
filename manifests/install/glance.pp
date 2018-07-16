@@ -39,6 +39,11 @@ define ostack_controller::install::glance (
       $dbconnection = "mysql+pymysql"
    }
 
+   $services = [ 'glance-api', 'glance-registry' ]
+   # Make sure glance package is installed
+   package { $services:
+      ensure  => present,
+   }
    ostack_controller::files::glance { 'install':
       dbtype  => $dbtype,
       dbname  => $dbname,
@@ -59,25 +64,18 @@ define ostack_controller::install::glance (
       glance_pub_port  => $glance_pub_port,
       memcache_port    => $memcache_port,
       service_descr => $service_descr,
-      notify  => Exec['glance-service-restart'],
+      require       => Package[$services],
    }
 
-   # File configuration
-   # We only manage those which need modification
-#   file { 'glance-api.conf':
-#      name    => '/etc/glance/glance-api.conf',
-#      ensure  => present,
-#      require => Package['glance'],
-#      content => template('ostack_controller/glance/glance-api.conf.erb'),
-#      notify  => Exec['glance-service-restart'],
-#   }
-#   file { 'glance-registry.conf':
-#      name    => '/etc/glance/glance-registry.conf',
-#      ensure  => present,
-#      require => Package['glance'],
-#      content => template('ostack_controller/glance/glance-registry.conf.erb'),
-#      notify  => Exec['glance-service-restart'],
-#   }
+   ostack_controller::services::glance { 'install':
+      enable  => true,
+      ensure  => 'running',
+      require => [ Package[$services], 
+                   Ostack_controller::Files::Glance['install'], 
+                 ],
+      before  => Exec['glance-populate_db'],
+   }
+
 
    # Create glance database
    ostack_controller::dbcreate { 'glance':
@@ -89,35 +87,14 @@ define ostack_controller::install::glance (
      notify  => Exec['glance-populate_db'],
    }
 
-   # Make sure glance package is installed
-   package { 'glance-api':
-      ensure  => present,
-   }
-   package { 'glance-registry':
-      ensure  => present,
-   }
-   service { 'glance-api':
-      enable  => true,
-      require => Package['glance-api'],
-   }
-   service { 'glance-registry':
-      enable  => true,
-      require => Package['glance-registry'],
-   }
-
-   exec { "glance-service-restart":
-      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-      environment => ['HOME=/root','USER=root'],
-      require     => [ Ostack_controller::Files::Glance['install'], Package['glance-api'], Package['glance-registry'], ],
-      refreshonly => true,
-      command     => 'service glance-registry restart && service glance-api restart',
-   }
-
    # Configure post install - populate DB
    exec { "glance-populate_db":
       path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
       environment => ['HOME=/root','USER=root'],
-      require     => [ Ostack_controller::Files::Glance['install'], Package['glance-api'], Package['glance-registry'], ],
+      subscribe   => [ Ostack_controller::Files::Glance['install'], 
+                       Package['glance-api'], 
+                       Package['glance-registry'],
+                     ],
       refreshonly => true,
       onlyif      => "test x`echo $(mysql -s -e \"show databases;\" | grep -w $dbname)` = x\"$dbname\"",
       command     => "su -s /bin/sh -c \"glance-manage db_sync\" $dbname",
@@ -136,7 +113,7 @@ define ostack_controller::install::glance (
    exec { 'GlanceRoleAttribution':
       path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
       environment => $admin_env,
-      require     => Exec['GlanceUserCreation'],
+      subscribe   => Exec['GlanceUserCreation'],
       refreshonly => true,
       command     => "openstack role add --project service --user $glanceuser admin",
    }

@@ -7,15 +7,15 @@ define ostack_controller::uninstall::glance (
      $dbpass  = 'glatomos3',
      $dbhost  = 'ostackdb',
 ) {
-   service { "glance-registry-stop":
-      name   => 'glance-registry',
-      ensure => stopped,
-      before => [ Service['glance-api-stop'], Ostack_controller::Dropdb['glance'],],
-   }
-   service { "glance-api-stop":
-      name   => 'glance-api',
-      ensure => stopped,
-      before => Ostack_controller::Dropdb['glance'],
+
+   $services = [ 'glance-api', 'glance-registry' ]
+
+   ostack_controller::services::glance { 'uninstall':
+     ensure  => stopped,
+     enable  => false,
+     before  => [ Ostack_controller::Dropdb['glance'],
+		  Package[$services],
+	        ],
    }
 
    # Drop glance database
@@ -27,15 +27,9 @@ define ostack_controller::uninstall::glance (
      dbhost  => $dbhost,
    }
 
-   # Make sure glance package is uninstalled
-   package { 'glance-api-uninstall':
-      name   => 'glance-api',
-      ensure => absent,
-      require  => Ostack_controller::Dropdb['glance'],
+   # Make sure glance package is installed
+   package { $services:
+      ensure  => absent,
    }
-   package { 'glance-registry-uninstall':
-      name   => 'glance-registry',
-      ensure => absent,
-      require  => Ostack_controller::Dropdb['glance'],
-   }
+
 }
