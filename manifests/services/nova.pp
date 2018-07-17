@@ -1,6 +1,6 @@
 # This should be ran only on the controller node
 #
-class ostack_controller::services::nova (
+define ostack_controller::services::nova (
      $enable   = undef,
      $ensure   = undef,
      $restart  = undef,

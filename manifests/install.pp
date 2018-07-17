@@ -66,6 +66,7 @@ class ostack_controller::install (
      dbuser  => $keystonedbuser,
      dbpass  => $keystonedbpass,
      dbhost  => $keystonedbhost,
+     admindbpass  => $admindbpass,
      controller_host => $controller_host,
      before  => Ostack_controller::Install::Glance['glance'],
    }

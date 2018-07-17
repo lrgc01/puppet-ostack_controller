@@ -38,16 +38,20 @@ define ostack_controller::install::neutron (
      $service_descr = "OpenStack Networking",
 ) {
 
-   # Set shell environment
-   $admin_env = ['HOME=/root','USER=root', 
-                'OS_USERNAME=admin', 
-                "OS_PASSWORD=$admindbpass", 
-                'OS_PROJECT_NAME=admin', 
-                'OS_USER_DOMAIN_NAME=Default', 
-                'OS_PROJECT_DOMAIN_NAME=Default', 
-                "OS_AUTH_URL=http://${controller_host}:${bstp_adm_port}", 
-                'OS_IDENTITY_API_VERSION=3', 
-                ]
+   $path          = { path   => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'] }
+
+   $env           = ['HOME=/root','USER=root']
+
+   $admin_env     = $env + [
+                    'OS_USERNAME=admin',
+                    "OS_PASSWORD=$admindbpass",
+                    'OS_PROJECT_NAME=admin',
+                    'OS_USER_DOMAIN_NAME=Default',
+                    'OS_PROJECT_DOMAIN_NAME=Default',
+                    "OS_AUTH_URL=http://${controller_host}:${bstp_adm_port}",
+                    'OS_IDENTITY_API_VERSION=3',
+                    ]
+   $exec_attr_hash = $path + { environment => $admin_env }
 
    # Pre requisites (user, endpoints, service, role)
 
@@ -104,24 +108,21 @@ define ostack_controller::install::neutron (
 
    # neutron user creation
    exec { 'NeutronUserCreation':
-      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-      environment => $admin_env,
+      *           => $exec_attr_hash,
       command     => "openstack user create --domain default --password \"$neutronpass\" $neutronuser",
       unless      => "openstack user show $neutronuser",
       notify      => Exec['NeutronRoleAttribution'],
    }
    # admin role attribution
    exec { 'NeutronRoleAttribution':
-      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-      environment => $admin_env,
+      *           => $exec_attr_hash,
       require     => Exec['NeutronUserCreation'],
       refreshonly => true,
       command     => "openstack role add --project service --user $neutronuser admin",
    } 
    # network service creation
    exec { 'NetworkServiceCreation':
-      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-      environment => $admin_env,
+      *           => $exec_attr_hash,
       command     => "openstack service create --name $neutronuser --description \"$service_descr\" network",
       unless      => "openstack service show $neutronuser",
    }
@@ -131,114 +132,55 @@ define ostack_controller::install::neutron (
    #                   is not found, that's why we use grep at the end.
    #
    exec { 'PubNetEndpointCreation':
-      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-      environment => $admin_env,
+      *           => $exec_attr_hash,
       command     => "openstack endpoint create --region $ostack_region network public http://$controller_host:$neutron_pub_port",
       unless      => "openstack endpoint list --region $ostack_region --interface public --service network|grep network",
    }
    exec { 'IntNetEndpointCreation':
-      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-      environment => $admin_env,
+      *           => $exec_attr_hash,
       command     => "openstack endpoint create --region $ostack_region network internal http://$controller_host:$neutron_int_port",
       unless      => "openstack endpoint list --region $ostack_region --interface internal --service network|grep network",
    }
    exec { 'AdmNetEndpointCreation':
-      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-      environment => $admin_env,
+      *           => $exec_attr_hash,
       command     => "openstack endpoint create --region $ostack_region network admin http://$controller_host:$neutron_adm_port",
       unless      => "openstack endpoint list --region $ostack_region --interface admin --service network|grep network",
    }
 
-   # Makes sure neutron packages are installed
-   package { 'neutron-server':
+   $base_pak = [ 'neutron-server', 'neutron-linuxbridge-agent', 'neutron-l3-agent', 'neutron-dhcp-agent', 'neutron-metadata-agent', ]
+   $packages = [ $base_pak ] + [ 'neutron-plugin-ml2', ]
+   $services = [ $base_pak ] + [ 'neutron-linuxbridge-cleanup', ]
+   $services_list = "neutron-server neutron-linuxbridge-agent neutron-l3-agent neutron-dhcp-agent neutron-metadata-agent neutron-linuxbridge-cleanup"
+
+   # Make sure neutron packages are installed
+   package { $packages:
       ensure  => present,
    } 
-   package { 'neutron-plugin-ml2':
-      ensure  => present,
-   } 
-   package { 'neutron-linuxbridge-agent':
-      ensure  => present,
-   } 
-   package { 'neutron-l3-agent':
-      ensure  => present,
-   } 
-   package { 'neutron-dhcp-agent':
-      ensure  => present,
-   } 
-   package { 'neutron-metadata-agent':
-      ensure  => present,
-   } 
-   service { 'neutron-server':
-      require => Package['neutron-server'],
+   service { $services:
+      require => Package[$packages],
       enable  => true,
-   } 
-   service { 'neutron-linuxbridge-agent':
-      require => Package['neutron-linuxbridge-agent'],
-      enable  => true,
-   } 
-   service { 'neutron-l3-agent':
-      require => Package['neutron-l3-agent'],
-      enable  => true,
-   } 
-   service { 'neutron-dhcp-agent':
-      require => Package['neutron-dhcp-agent'],
-      enable  => true,
-   } 
-   service { 'neutron-metadata-agent':
-      require => Package['neutron-metadata-agent'],
-      enable  => true,
+      ensure  => 'running',
    } 
 
+    $most_required = [ Ostack_controller::Files::Neutron['install'], 
+		       Service[$services],
+		     ]
    # Configure post install - populate DB
    exec { "neutron-populate_db":
-      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-      environment => ['HOME=/root','USER=root'],
-      require     => [ Ostack_controller::Files::Neutron['install'], Service['neutron-server'], Service['neutron-linuxbridge-agent'], Service['neutron-l3-agent'], Service['neutron-dhcp-agent'], Service['neutron-metadata-agent'], ],
+      *           => $exec_attr_hash,
+      require     => $most_required,
       refreshonly => true,
       onlyif      => "test x`echo $(mysql -s -e \"show databases;\" | grep -w $dbname)` = x\"$dbname\"",
       command     => "su -s /bin/sh -c \"neutron-db-manage --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head\" $dbname",
       timeout     => 600,
+      notify      => Exec['restart-neutron'],
    }
-   exec { "neutron-services-restart":
-      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-      environment => ['HOME=/root','USER=root'],
-      require     => [ Service['neutron-server'], Service['neutron-linuxbridge-agent'], Service['neutron-l3-agent'], Service['neutron-dhcp-agent'], Service['neutron-metadata-agent'], ],
+
+   exec { 'restart-neutron':
+      *           => $exec_attr_hash,
+      require     => Package[$packages],
+      subscribe   => Exec['neutron-populate_db'],
       refreshonly => true,
-      command     => 'service neutron-server restart && service neutron-linuxbridge-agent restart && service neutron-dhcp-agent restart && service neutron-metadata-agent restart && service neutron-l3-agent restart',
-   }
-   exec { "neutron-server-restart":
-      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-      environment => ['HOME=/root','USER=root'],
-      require     => Service['neutron-server'], 
-      refreshonly => true,
-      command     => 'service neutron-server restart',
-   }
-   exec { "neutron-linuxbridge-restart":
-      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-      environment => ['HOME=/root','USER=root'],
-      require     => [ Service['neutron-server'], Service['neutron-linuxbridge-agent'], ],
-      refreshonly => true,
-      command     => 'service neutron-linuxbridge-agent restart',
-   }
-   exec { "neutron-dhcp-restart":
-      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-      environment => ['HOME=/root','USER=root'],
-      require     => [ Service['neutron-server'], Service['neutron-dhcp-agent'], ],
-      refreshonly => true,
-      command     => 'service neutron-dhcp-agent restart',
-   }
-   exec { "neutron-metadata-restart":
-      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-      environment => ['HOME=/root','USER=root'],
-      require     => [ Service['neutron-server'], Service['neutron-metadata-agent'], ],
-      refreshonly => true,
-      command     => 'service neutron-metadata-agent restart',
-   }
-   exec { "neutron-l3-restart":
-      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-      environment => ['HOME=/root','USER=root'],
-      require     => [ Service['neutron-server'], Service['neutron-l3-agent'], ],
-      refreshonly => true,
-      command     => 'service neutron-l3-agent restart',
-   }
+      command     => "systemctl restart $services_list",
+   } 
 }

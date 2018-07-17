@@ -1,6 +1,6 @@
 # This should be ran only on the controller node
 #
-class ostack_controller::services::neutron (
+define ostack_controller::services::neutron (
      $enable   = undef,
      $ensure   = undef,
      $restart  = undef,

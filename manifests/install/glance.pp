@@ -23,27 +23,35 @@ define ostack_controller::install::glance (
 ) {
 
    # Set shell environment
-   $admin_env = ['HOME=/root','USER=root', 
-                'OS_USERNAME=admin', 
-                "OS_PASSWORD=$admindbpass", 
-                'OS_PROJECT_NAME=admin', 
-                'OS_USER_DOMAIN_NAME=Default', 
-                'OS_PROJECT_DOMAIN_NAME=Default', 
-                "OS_AUTH_URL=http://${controller_host}:${bstp_adm_port}", 
-                'OS_IDENTITY_API_VERSION=3', 
-                ]
+   $path          = { path   => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'] }
 
-   # Pre requisites (user, endpoints, service, role)
+   $env           = ['HOME=/root','USER=root']
 
+   $admin_env     = $env + [
+                    'OS_USERNAME=admin', 
+                    "OS_PASSWORD=$admindbpass", 
+                    'OS_PROJECT_NAME=admin', 
+                    'OS_USER_DOMAIN_NAME=Default', 
+                    'OS_PROJECT_DOMAIN_NAME=Default', 
+                    "OS_AUTH_URL=http://${controller_host}:${bstp_adm_port}", 
+                    'OS_IDENTITY_API_VERSION=3', 
+                    ]
+   $exec_attr_hash = $path + { environment => $admin_env }
+
+   $packages     = [ 'glance-api', 'glance-registry' ]
+   $services     = $packages
+   $services_list = "glance-api glance-registry"
+
+   # Make sure glance package is installed
+   package { $packages:
+      ensure  => present,
+   }
+
+   # For templates only
    if "$dbtype" == 'mysql' {
       $dbconnection = "mysql+pymysql"
    }
 
-   $services = [ 'glance-api', 'glance-registry' ]
-   # Make sure glance package is installed
-   package { $services:
-      ensure  => present,
-   }
    ostack_controller::files::glance { 'install':
       dbtype  => $dbtype,
       dbname  => $dbname,
@@ -64,14 +72,14 @@ define ostack_controller::install::glance (
       glance_pub_port  => $glance_pub_port,
       memcache_port    => $memcache_port,
       service_descr => $service_descr,
-      require       => Package[$services],
+      require       => Package[$packages],
    }
 
-   ostack_controller::services::glance { 'install':
+   service { $services:
       enable  => true,
       ensure  => 'running',
-      require => [ Package[$services], 
-                   Ostack_controller::Files::Glance['install'], 
+      require => [ Ostack_controller::Files::Glance['install'], 
+                   Package[$packages], 
                  ],
       before  => Exec['glance-populate_db'],
    }
@@ -89,11 +97,9 @@ define ostack_controller::install::glance (
 
    # Configure post install - populate DB
    exec { "glance-populate_db":
-      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-      environment => ['HOME=/root','USER=root'],
-      subscribe   => [ Ostack_controller::Files::Glance['install'], 
-                       Package['glance-api'], 
-                       Package['glance-registry'],
+      *           => $exec_attr_hash,
+      require     => [ Ostack_controller::Files::Glance['install'], 
+                       Package[$packages], 
                      ],
       refreshonly => true,
       onlyif      => "test x`echo $(mysql -s -e \"show databases;\" | grep -w $dbname)` = x\"$dbname\"",
@@ -103,23 +109,20 @@ define ostack_controller::install::glance (
 
    # After here everything occurs in identity service
    exec { 'GlanceUserCreation':
-      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-      environment => $admin_env,
+      *           => $exec_attr_hash,
       command     => "openstack user create --domain default --password \"$glancepass\" $glanceuser",
       unless      => "openstack user show $glanceuser",
       notify      => Exec['GlanceRoleAttribution'],
    }
    # admin role attribution
    exec { 'GlanceRoleAttribution':
-      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-      environment => $admin_env,
+      *           => $exec_attr_hash,
       subscribe   => Exec['GlanceUserCreation'],
       refreshonly => true,
       command     => "openstack role add --project service --user $glanceuser admin",
    }
    exec { 'ImageServiceCreation':
-      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-      environment => $admin_env,
+      *           => $exec_attr_hash,
       command     => "openstack service create --name $glanceuser --description \"$service_descr\" image",
       unless      => "openstack service show $glanceuser",
    }
@@ -129,21 +132,25 @@ define ostack_controller::install::glance (
    #                   is not found, that's why we use grep at the end.
    #
    exec { 'PubImageEndpointCreation':
-      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-      environment => $admin_env,
+      *           => $exec_attr_hash,
       command     => "openstack endpoint create --region $ostack_region image public http://$controller_host:$glance_pub_port",
       unless      => "openstack endpoint list --region $ostack_region --interface public --service image|grep image",
    }
    exec { 'IntImageEndpointCreation':
-      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-      environment => $admin_env,
+      *           => $exec_attr_hash,
       command     => "openstack endpoint create --region $ostack_region image internal http://$controller_host:$glance_int_port",
       unless      => "openstack endpoint list --region $ostack_region --interface internal --service image|grep image",
    }
    exec { 'AdmImageEndpointCreation':
-      path        => ['/bin', '/sbin', '/usr/bin', '/usr/sbin'],
-      environment => $admin_env,
+      *           => $exec_attr_hash,
       command     => "openstack endpoint create --region $ostack_region image admin http://$controller_host:$glance_adm_port",
       unless      => "openstack endpoint list --region $ostack_region --interface admin --service image|grep image",
+   }
+   exec { 'restart-services':
+      *           => $exec_attr_hash,
+      require     => Package[$packages],
+      subscribe   => Exec['glance-populate_db'],
+      refreshonly => true,
+      command     => "systemctl restart $services_list",
    }
 }
