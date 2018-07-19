@@ -87,7 +87,7 @@ class ostack_controller::files (
      glance_int_port  => $glance_int_port,
      glance_pub_port  => $glance_pub_port,
      memcache_port    => $memcache_port,
-     glance_service_descr => $glance_service_descr,
+     service_descr => $glance_service_descr,
    }
    ostack_controller::files::nova { 'nova-files':
      dbtype  => $dbtype,
@@ -138,6 +138,8 @@ class ostack_controller::files (
      dbhost   => $neutrondbhost,
      neutronuser   => $neutronuser,
      neutronpass   => $neutronpass,
+     novauser  => $novauser,
+     novapass  => $novapass,
      admindbpass   => $admindbpass,
      metadatapass   => $metadatapass,
      memcache_host   => $memcache_host,
@@ -163,6 +165,6 @@ class ostack_controller::files (
      neutron_int_port   => $neutron_int_port,
      neutron_pub_port   => $neutron_pub_port,
      memcache_port   => $memcache_port,
-     neutron_service_descr   => $neutron_service_descr,
+     service_descr   => $neutron_service_descr,
    }
 }
