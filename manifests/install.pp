@@ -21,7 +21,7 @@ class ostack_controller::install (
      $glanceuser            = $glancedbuser,
      $glancepass            = $glancedbpass,
      $novauser              = $novadbuser,
-     $novapass              = $novadbpass,
+     $novapass              = 'noatomos3',
      $placemuser            = 'placement',
      $placempass            = 'platomos3',
      $neutronuser           = $neutrondbuser,

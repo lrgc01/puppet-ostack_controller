@@ -10,6 +10,8 @@ define ostack_controller::files::neutron (
      $neutronpass  = $neutrondbpass,
      $novauser  = 'nova',
      $novapass  = 'noatomos3',
+     $glanceuser       = 'glance',
+     $glancepass       = 'glatomos3',
      $admindbpass = 'keatomos3',
      $metadatapass = 'meatomos3',
      $memcache_host = 'memcache',
